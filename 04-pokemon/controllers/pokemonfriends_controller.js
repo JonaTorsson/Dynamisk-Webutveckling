@@ -1,4 +1,4 @@
-const PokemonCards = require('../models/PokemonCards');
+const PokemonFriends = require('../models/PokemonFriends');
 //const modules = require('../models');
 
 
@@ -8,12 +8,12 @@ const PokemonCards = require('../models/PokemonCards');
 const create = async(req, res) => {
     try {
 
-        let card = new PokemonCards(req.body).save();
+        let friend = new PokemonFriends(req.body).save();
 
         return res.status(201).send({
             success: true,
             data: {
-                card
+                friend
             }
         })
 
@@ -34,14 +34,14 @@ const create = async(req, res) => {
 const read = async(req, res) => {
     try {
 
-        let card;
+        let friend;
         if (req.params.id) {
-            card = await PokemonCards.where({ "id" : req.params.id }).fetch( { require: false, withRelated: ['wonBattles', 'lostBattles'] });
+            friend = await PokemonFriends.where({ "id" : req.params.id }).fetch( { require: false });
         } else {
-            card = await PokemonCards.fetchAll({ require: false, withRelated: ['wonBattles', 'lostBattles']  });
+            friend = await PokemonFriends.fetchAll({ withRelated: ['cards'] });
         }
 
-        if(!card) {
+        if(!friend) {
             return res.status(400).send({
                 success: false, 
                 data: "Not found"
@@ -51,7 +51,7 @@ const read = async(req, res) => {
         return res.status(200).send({
             success: true, 
             data: {
-                card
+                friend
             }
         });
     } catch(err) {
@@ -70,15 +70,15 @@ const read = async(req, res) => {
 const update = async(req, res) => {
     try {
         
-        let card = await PokemonCards.where( { "id" : req.params.id } ).fetch({ require  : true });
+        let friend = await PokemonFriends.where( { "id" : req.params.id } ).fetch({ require  : true });
 
-        card = await card.set(req.body).save();
+        friend = await friend.set(req.body).save();
 
         return res.status(200).send(
             {
                 success: true,
                 data: {
-                    card
+                    friend
                 }
             }
         );
@@ -99,18 +99,34 @@ const update = async(req, res) => {
 const remove = async(req, res) => {
     try {
         
-        let card = await PokemonCards.where( { "id" : req.params.id } ).fetch({ require  : true });
+        let friend = await PokemonFriends.where( { "id" : req.params.id } ).fetch({ require  : true });
 
-        card = await card.destroy(req.body).then();
+        friend = await friend.destroy(req.body).then();
 
         return res.status(200).send(
             {
                 success: true,
                 data: {
-                    card
+                    friend
                 }
             }
         );
+
+    } catch (err) {
+        return res.status(500).send({
+            success: false,
+            data: err.message
+        }
+        );  
+    }
+}
+
+const addCard = async(req, res) => {
+    try {
+
+        let friend = await PokemonFriends.where( { "id" : req.params.id } ).fetch({ require  : true });
+
+        friend = await friend.cards().attach(req.body);      //destroy(req.body).then();
 
     } catch (err) {
         return res.status(500).send({
@@ -125,5 +141,6 @@ module.exports = {
     create,
     read,
     update,
-    remove
+    remove,
+    addCard
 }
